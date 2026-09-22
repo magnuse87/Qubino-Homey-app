@@ -96,15 +96,21 @@ class ZMNHXD extends QubinoDevice {
       await this.addCapability(CAPABILITIES.METER_RESET_MAINTENANCE_ACTION).catch(err => this.error(`Error adding ${CAPABILITIES.METER_RESET_MAINTENANCE_ACTION} capability`, err));
       this.log('added capability', CAPABILITIES.METER_RESET_MAINTENANCE_ACTION);
     }
-    if (this.hasCapability(CAPABILITIES.MEASURE_VOLTAGE)) this.registerCapability(CAPABILITIES.MEASURE_VOLTAGE, COMMAND_CLASSES.METER);
-    if (this.hasCapability(CAPABILITIES.MEASURE_CURRENT)) this.registerCapability(CAPABILITIES.MEASURE_CURRENT, COMMAND_CLASSES.METER);
-    if (this.hasCapability(CAPABILITIES.MEASURE_POWER)) this.registerCapability(CAPABILITIES.MEASURE_POWER, COMMAND_CLASSES.METER);
-    if (this.hasCapability(CAPABILITIES.METER_POWER_IMPORT)) this.registerCapability(CAPABILITIES.METER_POWER_IMPORT, COMMAND_CLASSES.METER);
-    if (this.hasCapability(CAPABILITIES.METER_POWER_EXPORT)) this.registerCapability(CAPABILITIES.METER_POWER_EXPORT, COMMAND_CLASSES.METER);
-    if (this.hasCapability(CAPABILITIES.POWER_REACTIVE)) this.registerCapability(CAPABILITIES.POWER_REACTIVE, COMMAND_CLASSES.METER);
-    if (this.hasCapability(CAPABILITIES.POWER_TOTAL_REACTIVE)) this.registerCapability(CAPABILITIES.POWER_TOTAL_REACTIVE, COMMAND_CLASSES.METER);
-    if (this.hasCapability(CAPABILITIES.POWER_TOTAL_APPARENT)) this.registerCapability(CAPABILITIES.POWER_TOTAL_APPARENT, COMMAND_CLASSES.METER);
-    if (this.hasCapability(CAPABILITIES.POWER_FACTOR)) this.registerCapability(CAPABILITIES.POWER_FACTOR, COMMAND_CLASSES.METER);
+    // Periodically force a GET for every meter capability, using the user configurable
+    // 'meterPollingInterval' setting (in seconds). This works around Homey's Z-Wave stack
+    // sometimes marking the node unreachable and not updating capability values on its own
+    // once a report gets lost, see support article about the 3-Phase Smart Meter losing reports.
+    const meterPollOpts = { getOpts: { pollInterval: 'meterPollingInterval', pollMultiplication: 1000 } };
+
+    if (this.hasCapability(CAPABILITIES.MEASURE_VOLTAGE)) this.registerCapability(CAPABILITIES.MEASURE_VOLTAGE, COMMAND_CLASSES.METER, meterPollOpts);
+    if (this.hasCapability(CAPABILITIES.MEASURE_CURRENT)) this.registerCapability(CAPABILITIES.MEASURE_CURRENT, COMMAND_CLASSES.METER, meterPollOpts);
+    if (this.hasCapability(CAPABILITIES.MEASURE_POWER)) this.registerCapability(CAPABILITIES.MEASURE_POWER, COMMAND_CLASSES.METER, meterPollOpts);
+    if (this.hasCapability(CAPABILITIES.METER_POWER_IMPORT)) this.registerCapability(CAPABILITIES.METER_POWER_IMPORT, COMMAND_CLASSES.METER, meterPollOpts);
+    if (this.hasCapability(CAPABILITIES.METER_POWER_EXPORT)) this.registerCapability(CAPABILITIES.METER_POWER_EXPORT, COMMAND_CLASSES.METER, meterPollOpts);
+    if (this.hasCapability(CAPABILITIES.POWER_REACTIVE)) this.registerCapability(CAPABILITIES.POWER_REACTIVE, COMMAND_CLASSES.METER, meterPollOpts);
+    if (this.hasCapability(CAPABILITIES.POWER_TOTAL_REACTIVE)) this.registerCapability(CAPABILITIES.POWER_TOTAL_REACTIVE, COMMAND_CLASSES.METER, meterPollOpts);
+    if (this.hasCapability(CAPABILITIES.POWER_TOTAL_APPARENT)) this.registerCapability(CAPABILITIES.POWER_TOTAL_APPARENT, COMMAND_CLASSES.METER, meterPollOpts);
+    if (this.hasCapability(CAPABILITIES.POWER_FACTOR)) this.registerCapability(CAPABILITIES.POWER_FACTOR, COMMAND_CLASSES.METER, meterPollOpts);
   }
 
   /**

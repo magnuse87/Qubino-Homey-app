@@ -14071,7 +14071,29 @@
               "en": "3-Phase Smart Meter (ZMNHXD) - Total",
               "nl": "3-Phase Smart Meter (ZMNHXD) -  Total"
             },
-            "settings": []
+            "settings": [
+              {
+                "id": "meterPollingInterval",
+                "type": "number",
+                "label": {
+                  "en": "Forced refresh interval",
+                  "nl": "Interval voor geforceerd vernieuwen"
+                },
+                "hint": {
+                  "en": "Homey will periodically request a fresh reading from the meter, in addition to the reports the meter sends by itself. This helps recover values that would otherwise get stuck when Homey misses a report. Set to 0 to disable.",
+                  "nl": "Homey zal periodiek zelf een nieuwe meterstand opvragen, naast de reports die de meter zelf verstuurd. Dit helpt om waarden te herstellen die anders vast zouden blijven staan wanneer Homey een report mist. Zet op 0 om uit te schakelen."
+                },
+                "units": {
+                  "en": "s",
+                  "nl": "s"
+                },
+                "value": 900,
+                "attr": {
+                  "min": 0,
+                  "max": 86400
+                }
+              }
+            ]
           },
           "2": {
             "class": "socket",
@@ -14088,7 +14110,29 @@
               "en": "3-Phase Smart Meter (ZMNHXD) - ph1",
               "nl": "3-Phase Smart Meter (ZMNHXD) - ph1"
             },
-            "settings": []
+            "settings": [
+              {
+                "id": "meterPollingInterval",
+                "type": "number",
+                "label": {
+                  "en": "Forced refresh interval",
+                  "nl": "Interval voor geforceerd vernieuwen"
+                },
+                "hint": {
+                  "en": "Homey will periodically request a fresh reading from the meter, in addition to the reports the meter sends by itself. This helps recover values that would otherwise get stuck when Homey misses a report. Set to 0 to disable.",
+                  "nl": "Homey zal periodiek zelf een nieuwe meterstand opvragen, naast de reports die de meter zelf verstuurd. Dit helpt om waarden te herstellen die anders vast zouden blijven staan wanneer Homey een report mist. Zet op 0 om uit te schakelen."
+                },
+                "units": {
+                  "en": "s",
+                  "nl": "s"
+                },
+                "value": 900,
+                "attr": {
+                  "min": 0,
+                  "max": 86400
+                }
+              }
+            ]
           },
           "3": {
             "class": "socket",
@@ -14105,7 +14149,29 @@
               "en": "3-Phase Smart Meter (ZMNHXD) - ph2",
               "nl": "3-Phase Smart Meter (ZMNHXD) - ph2"
             },
-            "settings": []
+            "settings": [
+              {
+                "id": "meterPollingInterval",
+                "type": "number",
+                "label": {
+                  "en": "Forced refresh interval",
+                  "nl": "Interval voor geforceerd vernieuwen"
+                },
+                "hint": {
+                  "en": "Homey will periodically request a fresh reading from the meter, in addition to the reports the meter sends by itself. This helps recover values that would otherwise get stuck when Homey misses a report. Set to 0 to disable.",
+                  "nl": "Homey zal periodiek zelf een nieuwe meterstand opvragen, naast de reports die de meter zelf verstuurd. Dit helpt om waarden te herstellen die anders vast zouden blijven staan wanneer Homey een report mist. Zet op 0 om uit te schakelen."
+                },
+                "units": {
+                  "en": "s",
+                  "nl": "s"
+                },
+                "value": 900,
+                "attr": {
+                  "min": 0,
+                  "max": 86400
+                }
+              }
+            ]
           },
           "4": {
             "class": "socket",
@@ -14122,7 +14188,29 @@
               "en": "3-Phase Smart Meter (ZMNHXD) - ph3",
               "nl": "3-Phase Smart Meter (ZMNHXD) - ph3"
             },
-            "settings": []
+            "settings": [
+              {
+                "id": "meterPollingInterval",
+                "type": "number",
+                "label": {
+                  "en": "Forced refresh interval",
+                  "nl": "Interval voor geforceerd vernieuwen"
+                },
+                "hint": {
+                  "en": "Homey will periodically request a fresh reading from the meter, in addition to the reports the meter sends by itself. This helps recover values that would otherwise get stuck when Homey misses a report. Set to 0 to disable.",
+                  "nl": "Homey zal periodiek zelf een nieuwe meterstand opvragen, naast de reports die de meter zelf verstuurd. Dit helpt om waarden te herstellen die anders vast zouden blijven staan wanneer Homey een report mist. Zet op 0 om uit te schakelen."
+                },
+                "units": {
+                  "en": "s",
+                  "nl": "s"
+                },
+                "value": 900,
+                "attr": {
+                  "min": 0,
+                  "max": 86400
+                }
+              }
+            ]
           }
         }
       },
