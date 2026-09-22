@@ -1,8 +1,12 @@
 # Handoff: 3-Phase Smart Meter (ZMNHXD1) reliability fix
 
 Status as of 2026-09-22. Update the same evening: all changes below are now committed and pushed to
-https://github.com/magnuse87/Qubino-Homey-app (`main`, on top of upstream 3e485e6). The owner reports the 4.1.8
-build has been running stably on his Homey Pro since July 2026. Written for whoever (human or Claude Code) continues this work.
+https://github.com/magnuse87/Qubino-Homey-app (`main`, on top of upstream 3e485e6). The owner reports stable
+operation since July 2026, **but the last build in the original `.homeybuild/` is 4.1.7** (built 2026-07-01 23:14:
+polling fix + association retry logic, association payload still `1.1`). The 4.1.8 source edits (endpoint `1.0` +
+versioned flag) are dated 2026-07-02 08:59 and were never built or installed. So what runs on the owner's Homey is
+4.1.7 plus the manual `1.0` association from Developer Tools; open item 1 below is still genuinely open.
+Written for whoever (human or Claude Code) continues this work.
 Companion to `CLAUDE.md` in the repo root — read that first for tooling and gotchas.
 
 ## 1. The problem
@@ -102,7 +106,8 @@ Note: `_configureReporting()` only runs on the device instance where `numberOfMu
    re-associated from `1.1` to `1.0` once. Endpoint 0 is the spec-correct lifeline destination, but confirm other
    multichannel Qubino devices on the owner's Homey still report after the update. If anything regresses, scope
    the new payload to ZMNHXD1 (e.g. an overridable getter on `QubinoDevice`).
-3. **Soak test.** Owner reports stable operation with `meterPollingInterval` at 900 s since July 2026 (2026-09-22). Confirm the "restart
+3. **Soak test.** Owner reports stable operation with `meterPollingInterval` at 900 s since July 2026 (2026-09-22),
+   on the 4.1.7 build (see status note at the top). The 4.1.8 association code has not been soak-tested. Confirm the "restart
    the app every 5 minutes" Flow can be disabled/deleted. Watch for stuck values.
 4. **Commit.** Done 2026-09-22: commits on `main` for polling fix + settings, association fix + versioned flag,
    version/changelog, package-lock and docs, plus `.gitattributes`. Pushed to the owner's fork (see §7).
