@@ -41,6 +41,9 @@ and what is still open. Do not re-investigate things that are marked as verified
   Prepare the code, then ask the owner to run the command and paste the console output back.
 - Publishing to the App Store / a Test channel is **not** possible from this fork: `com.qubino` belongs to Qubino's
   Athom account. The path to a real release is a PR to upstream.
+- Repo: `C:\Users\magnu\Documents\Claude Code\homey-qubino\Qubino-Homey-app`. Remotes: `origin` = the owner's fork
+  https://github.com/magnuse87/Qubino-Homey-app (push here), `upstream` = QubinoHelp/Qubino-Homey-app (fetch only).
+  Commit and push to `origin main`; never push to `upstream`.
 
 ## Gotchas — learned the hard way, do not relearn
 
@@ -63,12 +66,10 @@ and what is still open. Do not re-investigate things that are marked as verified
    polling worked. Fixed in `lib/QubinoDevice.js` (`_configureMultiChannelReporting`) with a versioned
    `multiChannelReportingConfigured` flag (`MULTI_CHANNEL_REPORTING_CONFIG_VERSION`) so already-paired devices are
    reconfigured once. Bump that constant if the association scheme ever changes again.
-6. **`git status` is full of noise.** ~300 files show as modified purely because of CRLF/LF conversion (no
-   `.gitattributes`). Use `git diff --ignore-all-space --stat` (or `git diff -w`) to see real changes. As of the
-   handoff the only files with real changes vs `origin/main` (3e485e6, v4.1.6) are:
-   `.homeychangelog.json`, `.homeycompose/app.json`, `app.json`, `drivers/ZMNHXD1/device.js`,
-   `drivers/ZMNHXD1/driver.compose.json`, `lib/QubinoDevice.js` (+ `package-lock.json` from `npm install`).
-   Nothing has been committed yet.
+6. **Line endings.** Upstream stores LF; the owner has `core.autocrlf=true` and the repo now has a `.gitattributes`
+   (`* text=auto`), so `git status` should be clean. If it ever fills up with CRLF noise, use
+   `git diff --ignore-all-space --stat` to see real changes. The changes vs upstream v4.1.6 (3e485e6) are committed
+   as five commits on `main` (polling fix, association fix, version/changelog, lockfile, docs).
 7. Physical Z-Wave association state lives **in the meter**, not in Homey. It survives app reinstalls. It can be
    inspected/changed manually in the Homey Developer Tools (tools.developer.homey.app → Z-Wave → node →
    Associations) — useful for quick experiments before changing code.
