@@ -31,5 +31,11 @@
   },
   "4.1.6": {
     "en": "added HC Shutter FM (MT 02761) "
+  },
+  "4.1.7": {
+    "en": "Fixed 3-Phase Smart Meter (ZMNHXD) values getting stuck and requiring an app restart, by adding retry logic for multichannel association configuration and a configurable periodic forced refresh of meter values."
+  },
+  "4.1.8": {
+    "en": "Fixed 3-Phase Smart Meter (ZMNHXD) never receiving spontaneous updates from the phase channels (only forced refresh worked before). The multichannel association was pointed at the wrong destination endpoint; existing devices are reconfigured automatically."
   }
 }
