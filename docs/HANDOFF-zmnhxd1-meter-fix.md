@@ -233,3 +233,34 @@ to 60 made every phase endpoint send V/A/var/PF each minute (log: `REPORT src2 V
 PF=0.3391`, then src3, src4), and ph1 current dropped to the correct idle value within a minute. Phase polling was
 put back to 300 s as a safety net. Parameter 42 refreshes only the energy counters; W is reported on change
 (parameter 40, valid for total and each phase). Source: openHAB device database entry for ZMNHXD.
+
+## 10. Installation verified (2026-09-26, 11:17–11:20 local): compressor is a single-phase L1–L2 load
+
+Photos of the cabinet: the ZMNHXD is a **direct-measuring** meter (0.25–5(65) A, no external CTs). Wiring is
+L1/L2/L3 straight through (in: terminals 1/4/7, out: 3/6/9), both N terminals (10, 11) empty — i.e. the
+"N terminal unused" grid type, *not* Qubino's support-article wiring (one phase on N). The downstream RCBOs are
+2-pole between phase pairs, as usual in 230 V IT.
+
+Snapshot with the compressor running (local API session, values from parameter-43 reports):
+
+| | current | power | PF | reactive |
+|---|---|---|---|---|
+| ph1 | 6.62 A | 635.6 W | 0.73 | −619.5 var |
+| ph2 | 6.99 A | 833.1 W | 0.94 | +297.5 var |
+| ph3 | 0 A | 0 W | 1 | 0 |
+| Total | | 1428.3 W | 0.84 | −321.7 var |
+
+Interpretation: equal current on L1 and L2, zero on L3 ⇒ the compressor is a single-phase load between L1 and L2
+(L3 = 0 is a correct measurement, not a fault). With the artificial neutral the per-phase values are exactly the
+predicted artefacts: φ = atan(322/1428) ≈ 12.7° (true PF ≈ 0.98), so the phases show cos(φ+30°) ≈ 0.74 and
+cos(φ−30°) ≈ 0.95 (measured 0.73 / 0.94), per-phase W = V·I·PF (655 / 848 predicted vs 636 / 833 measured), and
+the reactive split is large and of opposite sign while the sums stay exact (P: 1469 vs 1428, Q: −322 vs −322).
+Consequences: Total W / kWh / var / kVARh are correct; Total PF (0.84) is an arithmetic artefact of the meter and
+should be ignored; per-phase current is real; per-phase V / W / var / PF are meaningless here — which is what
+`gridType = it_3wire` hides. The earlier "totals could be 2/3" worry does not apply (all three line currents are
+measured). Owner decided to keep the hiding as implemented.
+
+Tooling note: `homey api raw` performs a cloud login per invocation and Athom rate-limits that for ~40 minutes after
+a burst (already 2 calls/min for a few minutes tripped it). For anything repetitive use one process with a single
+session: `require('<npm global>/node_modules/homey/services/AthomApi.js').getActiveHomey()` then
+`homey.devices.getDevice({ id })` in a loop (see the watch script pattern in this session's notes).

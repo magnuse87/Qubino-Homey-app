@@ -46,6 +46,10 @@ and what is still open. Do not re-investigate things that are marked as verified
   settings object itself as `--body` (e.g. `{"gridType":"it_3wire"}`), **not** wrapped in `{"settings": …}`.
   `GET /api/manager/devices/device/` exposes `settings`, `energyObj`, `ui.components` — enough to verify most
   device-side behaviour without a `homey app run` log.
+  **Every `homey api raw` call is a cloud login**; Athom rate-limits that ("Too many requests") for ~40 min
+  after even a modest burst (2 calls/min for a few minutes). For repeated reads use ONE Node process:
+  `const api = require('C:/Users/magnu/AppData/Roaming/npm/node_modules/homey/services/AthomApi.js');`
+  `const homey = await api.getActiveHomey(); await homey.devices.getDevice({ id })` in a loop (handoff §10).
   Z-Wave traffic: `PUT /api/manager/zwave/log --body '{"enabled":true}'` then `GET /api/manager/zwave/log`
   (100-entry ring buffer). Poll it at most every 3–5 s: 1 s polling got the whole API rate-limited
   ("Too many requests") for more than 10 minutes.
