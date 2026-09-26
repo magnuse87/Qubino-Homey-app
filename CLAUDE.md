@@ -76,6 +76,11 @@ and what is still open. Do not re-investigate things that are marked as verified
 8. The meter only sends unsolicited power reports when the change exceeds parameter 40 (`powerReportingThreshold`,
    default 50 %, min 5 W) and at most every parameter 42/43 seconds. "No update" while the load is flat is normal.
 
+9. **ZMNHXD1 settings `meterRole` (Total device) and `gridType` (phase devices)** drive `Device.setEnergy()` and
+   `setCapabilityOptions(cap, { uiComponent: null })` at init and on change (4.1.9, see handoff §8). Both mechanisms
+   are documented by Athom but **unverified on the owner's hardware** as of 2026-09-26. `meterRole` must stay on the
+   Total node only and `gridType` on the phase nodes only (gotcha 1). Default values reproduce upstream behaviour.
+
 ## Conventions
 
 - Keep the existing code style (ESLint config in `.eslintrc.json`, 2-space indent, single quotes, `this.log` /

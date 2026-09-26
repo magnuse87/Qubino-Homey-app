@@ -145,3 +145,37 @@ Repo at `C:\Users\magnu\Documents\Claude Code\homey-qubino\Qubino-Homey-app` (th
 copy no longer exists; history was rebuilt from upstream 3e485e6 + the handoff zip). Branch `main`, remotes
 `origin` = https://github.com/magnuse87/Qubino-Homey-app (fork, push target), `upstream` = QubinoHelp/Qubino-Homey-app.
 Language: the owner writes Norwegian; code, comments and changelog are in English.
+
+## 8. 4.1.9 (2026-09-26): Homey Energy role and grid type — NOT yet run on hardware
+
+Two owner requests, implemented in `drivers/ZMNHXD1/device.js` + `driver.compose.json`, validated with
+`homey app validate --level publish`, not yet installed.
+
+**Homey Energy.** Root cause: `"energy": { "cumulative": true }` in the driver manifest applied to all five devices,
+so Homey Energy treated the meter as the home's main meter ("whole_house_meter") and never as a consumer; the three
+phase devices were main meters too. Fix: manifest block removed; the Total device gets a `meterRole` dropdown
+(`home` = cumulative main meter, the upstream default; `appliance` = regular consumer) and the energy object is set
+at runtime with `Device.setEnergy()` (Homey ≥ 12.6.1, owner has 13.5). Root and phase devices get `{}`.
+Homey has no API to exclude a device from Energy, so ph1–ph3 (class `socket`, `measure_power`) still show up as
+consumers; the owner can toggle "Exclude from Energy" on each of them manually.
+
+**Grid type.** The owner's meter is wired L1/L2/L3 with the N terminal unused (Norwegian 230 V IT). All three phase
+devices show ~135 V, i.e. 230/√3 against the meter's artificial neutral point. By Blondel's theorem the sums on
+the Total device (W, kWh import/export, kvar) are correct; per-phase voltage, power, reactive power and power factor
+are reference-dependent artefacts (even a purely resistive load shows PF ≤ 0.87 per phase). Per-phase current is
+correct (CTs are in the lines). With Qubino's official no-neutral wiring (one phase on the N terminal, one L input
+unused; support article 44001707366) per-phase current is wrong as well. Hence `gridType` on each phase device:
+`tn` (hide nothing), `it_3wire` (hide voltage, power, reactive, PF), `it_aron` (hide all five). Hiding uses
+`setCapabilityOptions(cap, { uiComponent: null, preventInsights: true })`, so Flows/Insights keep working; `tn`
+restores `uiComponent: 'sensor'`.
+
+**To verify on the next `homey app install` (add to open item 1):**
+1. Total device → advanced settings → "Role in Homey Energy" = "Single appliance"; log should show
+   `energy object set to {"meterPowerImportedCapability":…}` and the device should appear as a consumer in Energy.
+2. Each phase device → "Grid type" = "3 phases without neutral …, N terminal unused"; log should show
+   `capability measure_voltage is now hidden (grid type it_3wire)` etc., and the device card should only show
+   current (plus the reset button). If the card still shows the values, `uiComponent: null` via
+   `setCapabilityOptions` is not honoured at runtime and the fallback is `removeCapability`/`addCapability`.
+3. Switch back to TN once to confirm the readings reappear.
+4. Existing devices may have `meterRole`/`gridType` = `null` until the settings are saved once; the code treats
+   `null` as `home` / `tn` (upstream behaviour).
