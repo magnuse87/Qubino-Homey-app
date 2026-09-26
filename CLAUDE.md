@@ -37,8 +37,15 @@ and what is still open. Do not re-investigate things that are marked as verified
 - `homey app validate --level publish` before any install/publish. `homey app version patch` bumps
   `.homeycompose/app.json` (+ asks for changelog); if you bump by hand, update `.homeycompose/app.json`,
   `app.json` and `.homeychangelog.json` together (see 4.1.7 / 4.1.8 entries for the pattern).
-- Claude cannot run `homey app run/install` itself (needs the owner's Athom login + LAN access to the Homey Pro).
-  Prepare the code, then ask the owner to run the command and paste the console output back.
+- Claude CAN run the Homey CLI from this machine (verified 2026-09-26): `homey whoami` is logged in as the owner, the
+  Homey Pro (id 646caf03bec22d0ba2403c8e, firmware 13.5) is selected and reachable on the LAN. Docker is **not**
+  installed here, so use `homey app run --remote` (runs on the Homey, no Docker) — plain `homey app run` fails.
+  Run it in the background with output redirected to a file, and `homey app install` afterwards to make it stick.
+- Homey Web API from the CLI: `homey api raw --path /api/manager/... --json`. In Git Bash set `MSYS_NO_PATHCONV=1`
+  or the leading `/api` is mangled into a Windows path. `PUT /api/manager/devices/device/<id>/settings` takes the
+  settings object itself as `--body` (e.g. `{"gridType":"it_3wire"}`), **not** wrapped in `{"settings": …}`.
+  `GET /api/manager/devices/device/` exposes `settings`, `energyObj`, `ui.components` — enough to verify most
+  device-side behaviour without a `homey app run` log.
 - Publishing to the App Store / a Test channel is **not** possible from this fork: `com.qubino` belongs to Qubino's
   Athom account. The path to a real release is a PR to upstream.
 - Repo: `C:\Users\magnu\Documents\Claude Code\homey-qubino\Qubino-Homey-app`. Remotes: `origin` = the owner's fork
@@ -78,7 +85,7 @@ and what is still open. Do not re-investigate things that are marked as verified
 
 9. **ZMNHXD1 settings `meterRole` (Total device) and `gridType` (phase devices)** drive `Device.setEnergy()` and
    `setCapabilityOptions(cap, { uiComponent: null })` at init and on change (4.1.9, see handoff §8). Both mechanisms
-   are documented by Athom but **unverified on the owner's hardware** as of 2026-09-26. `meterRole` must stay on the
+   were verified on the owner's hardware on 2026-09-26 (see handoff §8). `meterRole` must stay on the
    Total node only and `gridType` on the phase nodes only (gotcha 1). Default values reproduce upstream behaviour.
 
 ## Conventions

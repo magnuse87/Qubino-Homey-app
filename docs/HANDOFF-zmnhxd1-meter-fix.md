@@ -93,7 +93,10 @@ Note: `_configureReporting()` only runs on the device instance where `numberOfMu
 
 ## 5. Open items / next steps (in order)
 
-1. **Verify change #5/#6 end-to-end.** `homey app validate --level publish`, then `homey app install` (version
+1. **Verify change #5/#6 end-to-end.** ✅ DONE 2026-09-26 with `homey app run --remote` (4.1.9): root logged
+   `configure multi channel reporting` → `multi channel association configured`, `multiChannelReportingConfigured` went
+   `true` → `2`, `zw_group_1` = `1.0`, no errors. Original text kept below for reference.
+   Original: `homey app validate --level publish`, then `homey app install` (version
    4.1.8). Expected on first start: root device logs `configure multi channel reporting` → `multi channel
    association configured`; afterwards Developer Tools should show group 1 = `1.0` **without** the owner setting it
    manually, and `multiChannelReportingConfigured` should read `2`. Ideally test on a device whose association is
@@ -146,7 +149,7 @@ copy no longer exists; history was rebuilt from upstream 3e485e6 + the handoff z
 `origin` = https://github.com/magnuse87/Qubino-Homey-app (fork, push target), `upstream` = QubinoHelp/Qubino-Homey-app.
 Language: the owner writes Norwegian; code, comments and changelog are in English.
 
-## 8. 4.1.9 (2026-09-26): Homey Energy role and grid type — NOT yet run on hardware
+## 8. 4.1.9 (2026-09-26): Homey Energy role and grid type — VERIFIED on hardware, installed
 
 Two owner requests, implemented in `drivers/ZMNHXD1/device.js` + `driver.compose.json`, validated with
 `homey app validate --level publish`, not yet installed.
@@ -169,7 +172,20 @@ unused; support article 44001707366) per-phase current is wrong as well. Hence `
 `setCapabilityOptions(cap, { uiComponent: null, preventInsights: true })`, so Flows/Insights keep working; `tn`
 restores `uiComponent: 'sensor'`.
 
-**To verify on the next `homey app install` (add to open item 1):**
+**Verification 2026-09-26 (all passed, `homey app run --remote` then `homey app install`, app 4.1.9 running):**
+- Init: Total logged `energy object set to {"cumulative":true,…}` (default role), root and phases got `{}`
+  (they were all `cumulative: true` before, confirmed via `GET /api/manager/devices/device/` → `energyObj`).
+- Settings changed through the API (`PUT /api/manager/devices/device/<id>/settings`, body = the settings object
+  itself, e.g. `{"gridType":"it_3wire"}`): Total `meterRole=appliance` → energy object became
+  `{meterPowerImportedCapability, meterPowerExportedCapability}`; phases `gridType=it_3wire` → log
+  `capability measure_voltage is now hidden (grid type it_3wire)` ×4 per device and `ui.components` of the device
+  shrank to `['measure_current']`. Switching ph3 back to `tn` restored all five, and back to `it_3wire` hid them again.
+  So `uiComponent: null` via `setCapabilityOptions()` IS honoured at runtime.
+- Owner's devices are now: Total = `appliance`, ph1–ph3 = `it_3wire`; ph1–ph3 already had "Exclude from Energy"
+  (`energy_exclude: true`) set by the owner. A stray, harmless settings key `settings: null` exists on the four
+  sub-devices from a mistaken API call (the CLI passes `--body` as the settings object directly, not wrapped).
+
+The original checklist, for re-testing:
 1. Total device → advanced settings → "Role in Homey Energy" = "Single appliance"; log should show
    `energy object set to {"meterPowerImportedCapability":…}` and the device should appear as a consumer in Energy.
 2. Each phase device → "Grid type" = "3 phases without neutral …, N terminal unused"; log should show
