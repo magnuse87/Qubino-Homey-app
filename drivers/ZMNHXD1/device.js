@@ -5,6 +5,7 @@ const { CAPABILITIES, COMMAND_CLASSES } = require('../../lib/constants');
 
 const SETTING_GRID_TYPE = 'gridType';
 const SETTING_METER_ROLE = 'meterRole';
+const SETTING_METER_POLLING_INTERVAL = 'meterPollingInterval';
 
 const GRID_TYPE = {
   TN: 'tn', // 3 phases + neutral (TN/TT 400 V), the wiring the meter is designed for
@@ -23,6 +24,19 @@ const PHASE_CAPABILITIES = [
   CAPABILITIES.MEASURE_CURRENT,
   CAPABILITIES.MEASURE_POWER,
   CAPABILITIES.POWER_REACTIVE,
+  CAPABILITIES.POWER_FACTOR,
+];
+
+// Every meter reading that is polled (all sub devices together).
+const METER_CAPABILITIES = [
+  CAPABILITIES.MEASURE_VOLTAGE,
+  CAPABILITIES.MEASURE_CURRENT,
+  CAPABILITIES.MEASURE_POWER,
+  CAPABILITIES.METER_POWER_IMPORT,
+  CAPABILITIES.METER_POWER_EXPORT,
+  CAPABILITIES.POWER_REACTIVE,
+  CAPABILITIES.POWER_TOTAL_REACTIVE,
+  CAPABILITIES.POWER_TOTAL_APPARENT,
   CAPABILITIES.POWER_FACTOR,
 ];
 
@@ -146,7 +160,7 @@ class ZMNHXD extends QubinoDevice {
     // 'meterPollingInterval' setting (in seconds). This works around Homey's Z-Wave stack
     // sometimes marking the node unreachable and not updating capability values on its own
     // once a report gets lost, see support article about the 3-Phase Smart Meter losing reports.
-    const meterPollOpts = { getOpts: { pollInterval: 'meterPollingInterval', pollMultiplication: 1000 } };
+    const meterPollOpts = { getOpts: { pollInterval: SETTING_METER_POLLING_INTERVAL, pollMultiplication: 1000 } };
 
     if (this.hasCapability(CAPABILITIES.MEASURE_VOLTAGE)) this.registerCapability(CAPABILITIES.MEASURE_VOLTAGE, COMMAND_CLASSES.METER, meterPollOpts);
     if (this.hasCapability(CAPABILITIES.MEASURE_CURRENT)) this.registerCapability(CAPABILITIES.MEASURE_CURRENT, COMMAND_CLASSES.METER, meterPollOpts);
@@ -173,8 +187,11 @@ class ZMNHXD extends QubinoDevice {
    */
   async onSettings({ oldSettings, newSettings, changedKeys }) {
     const result = await super.onSettings({ oldSettings, newSettings, changedKeys });
-    if (changedKeys.includes(SETTING_GRID_TYPE)) {
-      await this._applyGridType(newSettings[SETTING_GRID_TYPE]).catch(err => this.error('failed to apply grid type', err));
+    if (changedKeys.includes(SETTING_GRID_TYPE) || changedKeys.includes(SETTING_METER_POLLING_INTERVAL)) {
+      // Also re-applied on a polling interval change: homey-zwavedriver only remembers ONE capability
+      // per poll interval setting key, so on its own it would only re-time the last registered one.
+      await this._applyGridType(newSettings[SETTING_GRID_TYPE], newSettings[SETTING_METER_POLLING_INTERVAL])
+        .catch(err => this.error('failed to apply grid type', err));
     }
     if (changedKeys.includes(SETTING_METER_ROLE)) {
       await this._applyEnergyRole(newSettings[SETTING_METER_ROLE]).catch(err => this.error('failed to apply energy role', err));
@@ -183,22 +200,34 @@ class ZMNHXD extends QubinoDevice {
   }
 
   /**
-   * Hide or show the per-phase readings according to the grid type. Hidden capabilities are kept
-   * (so Flows and Insights referencing them keep working) but removed from the device UI through
-   * capability option uiComponent = null, and Insights are no longer generated for them.
-   * Only applies to the phase sub devices; the Total device always shows everything.
+   * Hide or show the per-phase readings according to the grid type, and (re)apply the periodic
+   * polling. Hidden capabilities are kept (so Flows and Insights referencing them keep working) but
+   * removed from the device UI through capability option uiComponent = null, Insights are no longer
+   * generated for them, and they are no longer polled - which keeps the Z-Wave traffic down and
+   * lets the visible readings (e.g. current) use a short polling interval. Hidden capabilities
+   * still update whenever the meter sends an unsolicited report.
+   * On the Total device nothing is hidden; only the polling is (re)applied.
    * @param {string} gridType one of GRID_TYPE, anything else is treated as TN
+   * @param {number} [pollSeconds] polling interval to apply, defaults to the current setting
    * @returns {Promise<void>}
    * @private
    */
-  async _applyGridType(gridType) {
-    if (!this._isPhaseNode()) return;
+  async _applyGridType(gridType, pollSeconds) {
+    if (this._isRootNode()) return;
     const type = Object.values(GRID_TYPE).includes(gridType) ? gridType : GRID_TYPE.TN;
-    const hidden = HIDDEN_PHASE_CAPABILITIES[type];
+    const hidden = this._isPhaseNode() ? HIDDEN_PHASE_CAPABILITIES[type] : [];
+    const seconds = Number(pollSeconds !== undefined ? pollSeconds : this.getSetting(SETTING_METER_POLLING_INTERVAL)) || 0;
 
-    for (const capabilityId of PHASE_CAPABILITIES) {
+    for (const capabilityId of METER_CAPABILITIES) {
       if (!this.hasCapability(capabilityId)) continue;
       const shouldHide = hidden.includes(capabilityId);
+
+      // Polling: stop for hidden capabilities, (re)start with the current interval for visible ones
+      if (typeof this._setPollInterval === 'function') {
+        this._setPollInterval(capabilityId, COMMAND_CLASSES.METER, shouldHide ? 0 : seconds * 1000);
+      }
+
+      if (!PHASE_CAPABILITIES.includes(capabilityId)) continue;
       let options = {};
       try {
         options = this.getCapabilityOptions(capabilityId) || {};
