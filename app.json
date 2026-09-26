@@ -9,7 +9,7 @@
     "local",
     "cloud"
   ],
-  "version": "4.1.8",
+  "version": "4.1.9",
   "compatibility": ">=5.0.0",
   "brandColor": "#1784c7",
   "description": {
@@ -14025,9 +14025,6 @@
           }
         }
       },
-      "energy": {
-        "cumulative": true
-      },
       "connectivity": [
         "zwave"
       ],
@@ -14092,6 +14089,35 @@
                   "min": 0,
                   "max": 86400
                 }
+              },
+              {
+                "id": "meterRole",
+                "type": "dropdown",
+                "label": {
+                  "en": "Role in Homey Energy",
+                  "nl": "Rol in Homey Energy"
+                },
+                "value": "home",
+                "values": [
+                  {
+                    "id": "home",
+                    "label": {
+                      "en": "Whole home meter (main meter)",
+                      "nl": "Hoofdmeter voor het hele huis"
+                    }
+                  },
+                  {
+                    "id": "appliance",
+                    "label": {
+                      "en": "Single appliance or circuit (consumer)",
+                      "nl": "Enkel apparaat of groep (verbruiker)"
+                    }
+                  }
+                ],
+                "hint": {
+                  "en": "Choose 'Whole home meter' when the meter measures the total consumption of the home; Homey Energy then subtracts all other devices from it. Choose 'Single appliance or circuit' when it measures one appliance, e.g. a heat pump; it then shows up as a regular consumer in Homey Energy.",
+                  "nl": "Kies 'Hoofdmeter voor het hele huis' als de meter het totale verbruik van de woning meet; Homey Energy trekt dan alle andere apparaten hiervan af. Kies 'Enkel apparaat of groep' als de meter één apparaat meet, bijvoorbeeld een warmtepomp; de meter verschijnt dan als gewone verbruiker in Homey Energy."
+                }
               }
             ]
           },
@@ -14130,6 +14156,42 @@
                 "attr": {
                   "min": 0,
                   "max": 86400
+                }
+              },
+              {
+                "id": "gridType",
+                "type": "dropdown",
+                "label": {
+                  "en": "Grid type (neutral conductor)",
+                  "nl": "Nettype (nulleider)"
+                },
+                "value": "tn",
+                "values": [
+                  {
+                    "id": "tn",
+                    "label": {
+                      "en": "3 phases + neutral (TN/TT 400 V)",
+                      "nl": "3 fasen + nul (TN/TT 400 V)"
+                    }
+                  },
+                  {
+                    "id": "it_3wire",
+                    "label": {
+                      "en": "3 phases without neutral (IT/TT 230 V), N terminal unused",
+                      "nl": "3 fasen zonder nul (IT/TT 230 V), N-klem niet aangesloten"
+                    }
+                  },
+                  {
+                    "id": "it_aron",
+                    "label": {
+                      "en": "3 phases without neutral (IT/TT 230 V), one phase on N terminal",
+                      "nl": "3 fasen zonder nul (IT/TT 230 V), één fase op N-klem"
+                    }
+                  }
+                ],
+                "hint": {
+                  "en": "Without a neutral conductor the meter references its voltages to an artificial neutral point, so the per-phase voltage, power, reactive power and power factor are not meaningful (with one phase on the N terminal the per-phase current is not either). The totals on the Total device are still correct. Selecting the matching grid type hides the readings that are not valid on this phase device; Flows and Insights that use them keep working.",
+                  "nl": "Zonder nulleider meet de meter de spanningen ten opzichte van een kunstmatig sterpunt, waardoor spanning, vermogen, reactief vermogen en arbeidsfactor per fase geen betekenis hebben (met één fase op de N-klem geldt dat ook voor de stroom per fase). De totalen op het Total-apparaat blijven correct. Het juiste nettype verbergt de ongeldige waarden op dit fase-apparaat; Flows en Insights die ze gebruiken blijven werken."
                 }
               }
             ]
@@ -14170,6 +14232,42 @@
                   "min": 0,
                   "max": 86400
                 }
+              },
+              {
+                "id": "gridType",
+                "type": "dropdown",
+                "label": {
+                  "en": "Grid type (neutral conductor)",
+                  "nl": "Nettype (nulleider)"
+                },
+                "value": "tn",
+                "values": [
+                  {
+                    "id": "tn",
+                    "label": {
+                      "en": "3 phases + neutral (TN/TT 400 V)",
+                      "nl": "3 fasen + nul (TN/TT 400 V)"
+                    }
+                  },
+                  {
+                    "id": "it_3wire",
+                    "label": {
+                      "en": "3 phases without neutral (IT/TT 230 V), N terminal unused",
+                      "nl": "3 fasen zonder nul (IT/TT 230 V), N-klem niet aangesloten"
+                    }
+                  },
+                  {
+                    "id": "it_aron",
+                    "label": {
+                      "en": "3 phases without neutral (IT/TT 230 V), one phase on N terminal",
+                      "nl": "3 fasen zonder nul (IT/TT 230 V), één fase op N-klem"
+                    }
+                  }
+                ],
+                "hint": {
+                  "en": "Without a neutral conductor the meter references its voltages to an artificial neutral point, so the per-phase voltage, power, reactive power and power factor are not meaningful (with one phase on the N terminal the per-phase current is not either). The totals on the Total device are still correct. Selecting the matching grid type hides the readings that are not valid on this phase device; Flows and Insights that use them keep working.",
+                  "nl": "Zonder nulleider meet de meter de spanningen ten opzichte van een kunstmatig sterpunt, waardoor spanning, vermogen, reactief vermogen en arbeidsfactor per fase geen betekenis hebben (met één fase op de N-klem geldt dat ook voor de stroom per fase). De totalen op het Total-apparaat blijven correct. Het juiste nettype verbergt de ongeldige waarden op dit fase-apparaat; Flows en Insights die ze gebruiken blijven werken."
+                }
               }
             ]
           },
@@ -14208,6 +14306,42 @@
                 "attr": {
                   "min": 0,
                   "max": 86400
+                }
+              },
+              {
+                "id": "gridType",
+                "type": "dropdown",
+                "label": {
+                  "en": "Grid type (neutral conductor)",
+                  "nl": "Nettype (nulleider)"
+                },
+                "value": "tn",
+                "values": [
+                  {
+                    "id": "tn",
+                    "label": {
+                      "en": "3 phases + neutral (TN/TT 400 V)",
+                      "nl": "3 fasen + nul (TN/TT 400 V)"
+                    }
+                  },
+                  {
+                    "id": "it_3wire",
+                    "label": {
+                      "en": "3 phases without neutral (IT/TT 230 V), N terminal unused",
+                      "nl": "3 fasen zonder nul (IT/TT 230 V), N-klem niet aangesloten"
+                    }
+                  },
+                  {
+                    "id": "it_aron",
+                    "label": {
+                      "en": "3 phases without neutral (IT/TT 230 V), one phase on N terminal",
+                      "nl": "3 fasen zonder nul (IT/TT 230 V), één fase op N-klem"
+                    }
+                  }
+                ],
+                "hint": {
+                  "en": "Without a neutral conductor the meter references its voltages to an artificial neutral point, so the per-phase voltage, power, reactive power and power factor are not meaningful (with one phase on the N terminal the per-phase current is not either). The totals on the Total device are still correct. Selecting the matching grid type hides the readings that are not valid on this phase device; Flows and Insights that use them keep working.",
+                  "nl": "Zonder nulleider meet de meter de spanningen ten opzichte van een kunstmatig sterpunt, waardoor spanning, vermogen, reactief vermogen en arbeidsfactor per fase geen betekenis hebben (met één fase op de N-klem geldt dat ook voor de stroom per fase). De totalen op het Total-apparaat blijven correct. Het juiste nettype verbergt de ongeldige waarden op dit fase-apparaat; Flows en Insights die ze gebruiken blijven werken."
                 }
               }
             ]

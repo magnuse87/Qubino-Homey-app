@@ -3,6 +3,52 @@
 const QubinoDevice = require('../../lib/QubinoDevice');
 const { CAPABILITIES, COMMAND_CLASSES } = require('../../lib/constants');
 
+const SETTING_GRID_TYPE = 'gridType';
+const SETTING_METER_ROLE = 'meterRole';
+
+const GRID_TYPE = {
+  TN: 'tn', // 3 phases + neutral (TN/TT 400 V), the wiring the meter is designed for
+  IT_3WIRE: 'it_3wire', // 3 phases without neutral, L1/L2/L3 connected, N terminal unused
+  IT_ARON: 'it_aron', // 3 phases without neutral, Qubino's official wiring: one phase on the N terminal
+};
+
+const METER_ROLE = {
+  HOME: 'home', // the meter measures the whole home (Homey Energy 'cumulative' main meter)
+  APPLIANCE: 'appliance', // the meter measures a single appliance or circuit (regular consumer)
+};
+
+// All meter readings of the phase sub devices (ph1 - ph3).
+const PHASE_CAPABILITIES = [
+  CAPABILITIES.MEASURE_VOLTAGE,
+  CAPABILITIES.MEASURE_CURRENT,
+  CAPABILITIES.MEASURE_POWER,
+  CAPABILITIES.POWER_REACTIVE,
+  CAPABILITIES.POWER_FACTOR,
+];
+
+// Phase readings that are not meaningful per grid type. Without a neutral conductor the meter
+// references its voltage inputs to an artificial neutral point, so every per-phase value that
+// depends on the voltage (voltage itself, active/reactive power, power factor) is an artefact;
+// only the sums on the Total device are correct (Blondel's theorem). With Qubino's "one phase on
+// the N terminal" wiring the per-phase currents are not meaningful either (one L input is unused).
+// The Total device is never affected.
+const HIDDEN_PHASE_CAPABILITIES = {
+  [GRID_TYPE.TN]: [],
+  [GRID_TYPE.IT_3WIRE]: [
+    CAPABILITIES.MEASURE_VOLTAGE,
+    CAPABILITIES.MEASURE_POWER,
+    CAPABILITIES.POWER_REACTIVE,
+    CAPABILITIES.POWER_FACTOR,
+  ],
+  [GRID_TYPE.IT_ARON]: [
+    CAPABILITIES.MEASURE_VOLTAGE,
+    CAPABILITIES.MEASURE_CURRENT,
+    CAPABILITIES.MEASURE_POWER,
+    CAPABILITIES.POWER_REACTIVE,
+    CAPABILITIES.POWER_FACTOR,
+  ],
+};
+
 /**
  * 3-Phase Smart Meter (ZMNHXD)
  * Manual: https://qubino.com/manuals/3-Phase_Smart_Meter.pdf
@@ -111,6 +157,112 @@ class ZMNHXD extends QubinoDevice {
     if (this.hasCapability(CAPABILITIES.POWER_TOTAL_REACTIVE)) this.registerCapability(CAPABILITIES.POWER_TOTAL_REACTIVE, COMMAND_CLASSES.METER, meterPollOpts);
     if (this.hasCapability(CAPABILITIES.POWER_TOTAL_APPARENT)) this.registerCapability(CAPABILITIES.POWER_TOTAL_APPARENT, COMMAND_CLASSES.METER, meterPollOpts);
     if (this.hasCapability(CAPABILITIES.POWER_FACTOR)) this.registerCapability(CAPABILITIES.POWER_FACTOR, COMMAND_CLASSES.METER, meterPollOpts);
+
+    // Apply the grid type (which phase readings are shown) and the Homey Energy role
+    await this._applyGridType(this.getSetting(SETTING_GRID_TYPE)).catch(err => this.error('failed to apply grid type', err));
+    await this._applyEnergyRole(this.getSetting(SETTING_METER_ROLE)).catch(err => this.error('failed to apply energy role', err));
+  }
+
+  /**
+   * Override onSettings to apply the grid type and Homey Energy role when they change. The
+   * new values are passed explicitly because getSetting() still returns the old values here.
+   * @param {object} oldSettings
+   * @param {object} newSettings
+   * @param {string[]} changedKeys
+   * @returns {Promise<*>}
+   */
+  async onSettings({ oldSettings, newSettings, changedKeys }) {
+    const result = await super.onSettings({ oldSettings, newSettings, changedKeys });
+    if (changedKeys.includes(SETTING_GRID_TYPE)) {
+      await this._applyGridType(newSettings[SETTING_GRID_TYPE]).catch(err => this.error('failed to apply grid type', err));
+    }
+    if (changedKeys.includes(SETTING_METER_ROLE)) {
+      await this._applyEnergyRole(newSettings[SETTING_METER_ROLE]).catch(err => this.error('failed to apply energy role', err));
+    }
+    return result;
+  }
+
+  /**
+   * Hide or show the per-phase readings according to the grid type. Hidden capabilities are kept
+   * (so Flows and Insights referencing them keep working) but removed from the device UI through
+   * capability option uiComponent = null, and Insights are no longer generated for them.
+   * Only applies to the phase sub devices; the Total device always shows everything.
+   * @param {string} gridType one of GRID_TYPE, anything else is treated as TN
+   * @returns {Promise<void>}
+   * @private
+   */
+  async _applyGridType(gridType) {
+    if (!this._isPhaseNode()) return;
+    const type = Object.values(GRID_TYPE).includes(gridType) ? gridType : GRID_TYPE.TN;
+    const hidden = HIDDEN_PHASE_CAPABILITIES[type];
+
+    for (const capabilityId of PHASE_CAPABILITIES) {
+      if (!this.hasCapability(capabilityId)) continue;
+      const shouldHide = hidden.includes(capabilityId);
+      let options = {};
+      try {
+        options = this.getCapabilityOptions(capabilityId) || {};
+      } catch (err) {
+        // No options stored yet for this capability
+      }
+      const isHidden = options.uiComponent === null;
+      if (isHidden === shouldHide) continue;
+      await this.setCapabilityOptions(capabilityId, {
+        ...options,
+        uiComponent: shouldHide ? null : 'sensor',
+        preventInsights: shouldHide,
+      });
+      this.log(`capability ${capabilityId} is now ${shouldHide ? 'hidden' : 'shown'} (grid type ${type})`);
+    }
+  }
+
+  /**
+   * Set the Homey Energy object of this device according to the meterRole setting. Only the
+   * Total sub device carries an energy object: as home it is the cumulative main meter of the
+   * home (the upstream behaviour), as appliance it is a regular consumer with meter_power
+   * import/export mapped for Homey Energy. The root device and the phase devices never get
+   * cumulative, otherwise Homey Energy counts the same energy several times.
+   * @param {string} meterRole one of METER_ROLE, anything else is treated as home
+   * @returns {Promise<void>}
+   * @private
+   */
+  async _applyEnergyRole(meterRole) {
+    if (typeof this.setEnergy !== 'function' || typeof this.getEnergy !== 'function') {
+      this.log('Device.setEnergy() not available on this Homey version, energy role not applied');
+      return;
+    }
+
+    let desired = {};
+    if (this._isTotalNode()) {
+      const role = meterRole === METER_ROLE.APPLIANCE ? METER_ROLE.APPLIANCE : METER_ROLE.HOME;
+      desired = role === METER_ROLE.HOME
+        ? {
+          cumulative: true,
+          cumulativeImportedCapability: CAPABILITIES.METER_POWER_IMPORT,
+          cumulativeExportedCapability: CAPABILITIES.METER_POWER_EXPORT,
+        }
+        : {
+          meterPowerImportedCapability: CAPABILITIES.METER_POWER_IMPORT,
+          meterPowerExportedCapability: CAPABILITIES.METER_POWER_EXPORT,
+        };
+    }
+
+    const current = this.getEnergy() || {};
+    if (ZMNHXD._sameEnergy(current, desired)) return;
+    await this.setEnergy(desired);
+    this.log('energy object set to', JSON.stringify(desired));
+  }
+
+  /**
+   * Compare two energy objects regardless of key order.
+   * @param {object} a
+   * @param {object} b
+   * @returns {boolean}
+   * @private
+   */
+  static _sameEnergy(a, b) {
+    const normalize = obj => JSON.stringify(Object.keys(obj).sort().map(key => [key, obj[key]]));
+    return normalize(a) === normalize(b);
   }
 
   /**
@@ -121,6 +273,25 @@ class ZMNHXD extends QubinoDevice {
   _isRootNode() {
     return Object.prototype.hasOwnProperty.call(this.node, 'MultiChannelNodes') && Object.keys(this.node.MultiChannelNodes).length > 0;
   }
+
+  /**
+   * The Total sub device (multi channel node 1) is the only one with accumulated energy.
+   * @returns {boolean}
+   * @private
+   */
+  _isTotalNode() {
+    return !this._isRootNode() && this.hasCapability(CAPABILITIES.METER_POWER_IMPORT);
+  }
+
+  /**
+   * The phase sub devices (multi channel nodes 2 - 4) are the only ones reporting voltage.
+   * @returns {boolean}
+   * @private
+   */
+  _isPhaseNode() {
+    return !this._isRootNode() && this.hasCapability(CAPABILITIES.MEASURE_VOLTAGE);
+  }
+
 }
 
 module.exports = ZMNHXD;
