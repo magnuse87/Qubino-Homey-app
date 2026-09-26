@@ -195,3 +195,31 @@ The original checklist, for re-testing:
 3. Switch back to TN once to confirm the readings reappear.
 4. Existing devices may have `meterRole`/`gridType` = `null` until the settings are saved once; the code treats
    `null` as `home` / `tn` (upstream behaviour).
+
+## 9. 4.1.10 (2026-09-26): per-phase current was stale — polling only what is visible
+
+Observation with the heat pump running: Total `measure_power` followed the load within seconds (threshold reports,
+parameter 40), but the phase devices' `measure_current` stayed at the standby values (2.95 / 0.26 / 0 A) while the
+meter's own display showed 6.9 A on L1 and L2. The Z-Wave log (`PUT /api/manager/zwave/log {"enabled":true}`, then
+`GET /api/manager/zwave/log`, a 100-entry ring buffer — poll it every 3–5 s, faster triggers "Too many requests"
+for many minutes) showed why: the meter only sends unsolicited V/A reports for a phase endpoint now and then
+(endpoint 2 sent 134.6 V and 6.955 A at 07:17:00, endpoints 3/4 nothing in the window), and Homey polled the phase
+devices only every 900 s. So per-phase current lags by up to 15 min and can miss a whole compressor cycle.
+
+Fix in 4.1.10: `_applyGridType()` now also manages polling — hidden readings get their poll timer cleared
+(`_setPollInterval(cap, 'METER', 0)`), visible ones are (re)started with `meterPollingInterval`. With `it_3wire`
+that is one GET per phase device per interval, so the owner's phase devices can run at 60 s (set via API after
+install). Library quirk found on the way: `homey-zwavedriver` stores only one capability per poll-interval setting
+key (`_pollIntervalSettingKeys`), so a change of `meterPollingInterval` used to re-time only `powerFactor` until
+the next restart; `onSettings` now re-applies the interval to every meter capability itself.
+
+Also seen in the log: the Total endpoint answered a `METER_GET` for scale 6 (power factor) with a scale 1 (kVAh)
+report, so `powerFactor` on Total updates only from unsolicited reports. Not fixed, cosmetic.
+
+**Open question about the installation (not software):** with the pump running the meter display shows 6.9 A on
+L1 and L2 and 0 A on L3. A running 3-phase compressor cannot have zero current on one line, so either the L3 current
+transformer is missing/not clamped, or the pump is effectively a single-phase (L1–L2) load. If the L3 CT is
+missing, the Total W/kWh are ~2/3 of the truth for a balanced 3-phase load (the artificial-neutral sum is exact
+only with all three currents). Distinguish by reading the per-phase power factor while the compressor runs
+(`GET /api/manager/devices/device/` → `capabilitiesObj.powerFactor`, still updated although hidden): equal PF on
+ph1 and ph2 ⇒ balanced 3-phase load with a missing L3 CT; clearly different PF (cos(φ±30°)) ⇒ single-phase load.

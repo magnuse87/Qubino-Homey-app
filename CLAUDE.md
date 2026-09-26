@@ -46,6 +46,12 @@ and what is still open. Do not re-investigate things that are marked as verified
   settings object itself as `--body` (e.g. `{"gridType":"it_3wire"}`), **not** wrapped in `{"settings": …}`.
   `GET /api/manager/devices/device/` exposes `settings`, `energyObj`, `ui.components` — enough to verify most
   device-side behaviour without a `homey app run` log.
+  Z-Wave traffic: `PUT /api/manager/zwave/log --body '{"enabled":true}'` then `GET /api/manager/zwave/log`
+  (100-entry ring buffer). Poll it at most every 3–5 s: 1 s polling got the whole API rate-limited
+  ("Too many requests") for more than 10 minutes.
+- `homey-zwavedriver` quirk: a poll-interval setting key maps to ONE capability (`_pollIntervalSettingKeys`), so
+  changing `meterPollingInterval` re-times only the last registered capability. `ZMNHXD1/device.js` works around it
+  in `onSettings` → `_applyGridType()`, which also stops polling hidden readings (4.1.10).
 - Publishing to the App Store / a Test channel is **not** possible from this fork: `com.qubino` belongs to Qubino's
   Athom account. The path to a real release is a PR to upstream.
 - Repo: `C:\Users\magnu\Documents\Claude Code\homey-qubino\Qubino-Homey-app`. Remotes: `origin` = the owner's fork
