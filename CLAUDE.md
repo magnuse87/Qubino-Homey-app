@@ -95,8 +95,8 @@ and what is still open. Do not re-investigate things that are marked as verified
 
 9. **ZMNHXD1 settings `meterRole` (Total device) and `gridType` (phase devices)** drive `Device.setEnergy()` and
    `setCapabilityOptions(cap, { uiComponent: null })` at init and on change (4.1.9, see handoff §8). Both mechanisms
-   were verified on the owner's hardware on 2026-09-26 (see handoff §8). `meterRole` must stay on the
-   Total node only and `gridType` on the phase nodes only (gotcha 1). Default values reproduce upstream behaviour.
+   were verified on the owner's hardware on 2026-09-26 (see handoff §8). `meterRole` lives on the Total node
+   only; `gridType` on all four sub nodes (since 4.1.11 it also hides the derived total PF and kVAh on Total) (gotcha 1). Default values reproduce upstream behaviour.
 
 ## Conventions
 

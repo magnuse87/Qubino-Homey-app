@@ -264,3 +264,12 @@ Tooling note: `homey api raw` performs a cloud login per invocation and Athom ra
 a burst (already 2 calls/min for a few minutes tripped it). For anything repetitive use one process with a single
 session: `require('<npm global>/node_modules/homey/services/AthomApi.js').getActiveHomey()` then
 `homey.devices.getDevice({ id })` in a loop (see the watch script pattern in this session's notes).
+
+## 11. 4.1.11 (2026-09-26): grid type on the Total device too — installed and verified
+
+`gridType` is now also declared on multi channel node 1. For `it_3wire` / `it_aron` it hides `powerFactor` and
+`powerTotalApparent` on Total (arithmetic artefacts without a neutral, see §10); W, kWh, var and kVARh stay.
+Installed 4.1.11 and set Total to `it_3wire`: `ui.components` = measure_power, meter_power.import/export,
+powerReactive, powerTotalReactive. Owner's devices: Total = appliance + it_3wire, ph1–ph3 = it_3wire, phase
+polling 300 s, meter parameter 43 = 60 s. The meter cannot report current on change (parameter 40 is W only), so
+parameter 43 is the only way to refresh V/A/PF; 30 s would double the meter's report traffic.
