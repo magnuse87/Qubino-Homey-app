@@ -63,6 +63,16 @@ const HIDDEN_PHASE_CAPABILITIES = {
   ],
 };
 
+// Total device readings that are not meaningful without a neutral. The meter derives the total power
+// factor and the apparent energy (kVAh) arithmetically from the per-phase apparent powers, which are
+// reference-dependent artefacts in that case (verified: total PF 0.84 shown for a load with a true PF of
+// 0.98). Total active/reactive power and energy are sums and stay exact, so they are always shown.
+const HIDDEN_TOTAL_CAPABILITIES = {
+  [GRID_TYPE.TN]: [],
+  [GRID_TYPE.IT_3WIRE]: [CAPABILITIES.POWER_FACTOR, CAPABILITIES.POWER_TOTAL_APPARENT],
+  [GRID_TYPE.IT_ARON]: [CAPABILITIES.POWER_FACTOR, CAPABILITIES.POWER_TOTAL_APPARENT],
+};
+
 /**
  * 3-Phase Smart Meter (ZMNHXD)
  * Manual: https://qubino.com/manuals/3-Phase_Smart_Meter.pdf
@@ -206,7 +216,7 @@ class ZMNHXD extends QubinoDevice {
    * generated for them, and they are no longer polled - which keeps the Z-Wave traffic down and
    * lets the visible readings (e.g. current) use a short polling interval. Hidden capabilities
    * still update whenever the meter sends an unsolicited report.
-   * On the Total device nothing is hidden; only the polling is (re)applied.
+   * On the Total device only the derived total power factor and apparent energy are hidden.
    * @param {string} gridType one of GRID_TYPE, anything else is treated as TN
    * @param {number} [pollSeconds] polling interval to apply, defaults to the current setting
    * @returns {Promise<void>}
@@ -215,7 +225,9 @@ class ZMNHXD extends QubinoDevice {
   async _applyGridType(gridType, pollSeconds) {
     if (this._isRootNode()) return;
     const type = Object.values(GRID_TYPE).includes(gridType) ? gridType : GRID_TYPE.TN;
-    const hidden = this._isPhaseNode() ? HIDDEN_PHASE_CAPABILITIES[type] : [];
+    let hidden = [];
+    if (this._isPhaseNode()) hidden = HIDDEN_PHASE_CAPABILITIES[type];
+    else if (this._isTotalNode()) hidden = HIDDEN_TOTAL_CAPABILITIES[type];
     const seconds = Number(pollSeconds !== undefined ? pollSeconds : this.getSetting(SETTING_METER_POLLING_INTERVAL)) || 0;
 
     for (const capabilityId of METER_CAPABILITIES) {
@@ -227,7 +239,6 @@ class ZMNHXD extends QubinoDevice {
         this._setPollInterval(capabilityId, COMMAND_CLASSES.METER, shouldHide ? 0 : seconds * 1000);
       }
 
-      if (!PHASE_CAPABILITIES.includes(capabilityId)) continue;
       let options = {};
       try {
         options = this.getCapabilityOptions(capabilityId) || {};

@@ -43,5 +43,8 @@
   },
   "4.1.10": {
     "en": "3-Phase Smart Meter (ZMNHXD): readings hidden by the 'Grid type' setting are no longer polled, so the visible readings (e.g. current per phase) can use a short 'Forced refresh interval' without flooding the Z-Wave network. Changing the refresh interval now takes effect for all readings immediately instead of only one. Clarified the hints of the reporting interval parameters: parameter 43 is what refreshes voltage, current and power factor; with it set to 0 those readings never update."
+  },
+  "4.1.11": {
+    "en": "3-Phase Smart Meter (ZMNHXD): the 'Grid type' setting is now also available on the Total device; in networks without a neutral conductor it hides the total power factor and apparent energy (kVAh), which the meter derives from per-phase values that are not meaningful there. Total power, energy and reactive power stay visible and correct."
   }
 }

@@ -9,7 +9,7 @@
     "local",
     "cloud"
   ],
-  "version": "4.1.10",
+  "version": "4.1.11",
   "compatibility": ">=5.0.0",
   "brandColor": "#1784c7",
   "description": {
@@ -14117,6 +14117,42 @@
                 "hint": {
                   "en": "Choose 'Whole home meter' when the meter measures the total consumption of the home; Homey Energy then subtracts all other devices from it. Choose 'Single appliance or circuit' when it measures one appliance, e.g. a heat pump; it then shows up as a regular consumer in Homey Energy.",
                   "nl": "Kies 'Hoofdmeter voor het hele huis' als de meter het totale verbruik van de woning meet; Homey Energy trekt dan alle andere apparaten hiervan af. Kies 'Enkel apparaat of groep' als de meter één apparaat meet, bijvoorbeeld een warmtepomp; de meter verschijnt dan als gewone verbruiker in Homey Energy."
+                }
+              },
+              {
+                "id": "gridType",
+                "type": "dropdown",
+                "label": {
+                  "en": "Grid type (neutral conductor)",
+                  "nl": "Nettype (nulleider)"
+                },
+                "value": "tn",
+                "values": [
+                  {
+                    "id": "tn",
+                    "label": {
+                      "en": "3 phases + neutral (TN/TT 400 V)",
+                      "nl": "3 fasen + nul (TN/TT 400 V)"
+                    }
+                  },
+                  {
+                    "id": "it_3wire",
+                    "label": {
+                      "en": "3 phases without neutral (IT/TT 230 V), N terminal unused",
+                      "nl": "3 fasen zonder nul (IT/TT 230 V), N-klem niet aangesloten"
+                    }
+                  },
+                  {
+                    "id": "it_aron",
+                    "label": {
+                      "en": "3 phases without neutral (IT/TT 230 V), one phase on N terminal",
+                      "nl": "3 fasen zonder nul (IT/TT 230 V), één fase op N-klem"
+                    }
+                  }
+                ],
+                "hint": {
+                  "en": "Without a neutral conductor the meter derives the total power factor and the apparent energy (kVAh) from per-phase values that are not meaningful, so they are misleading (e.g. 0.84 shown for a real power factor of 0.98). Selecting the matching grid type hides those two readings on this device. Total power, energy and reactive power/energy are sums and stay correct.",
+                  "nl": "Zonder nulleider leidt de meter de totale arbeidsfactor en de schijnbare energie (kVAh) af uit fasewaarden die geen betekenis hebben, waardoor ze misleidend zijn (bijv. 0,84 getoond bij een echte arbeidsfactor van 0,98). Het juiste nettype verbergt die twee waarden op dit apparaat. Totaal vermogen, energie en reactief vermogen/energie zijn sommen en blijven correct."
                 }
               }
             ]
