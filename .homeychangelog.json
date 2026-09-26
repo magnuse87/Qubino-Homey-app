@@ -37,5 +37,8 @@
   },
   "4.1.8": {
     "en": "Fixed 3-Phase Smart Meter (ZMNHXD) never receiving spontaneous updates from the phase channels (only forced refresh worked before). The multichannel association was pointed at the wrong destination endpoint; existing devices are reconfigured automatically."
+  },
+  "4.1.9": {
+    "en": "3-Phase Smart Meter (ZMNHXD): added a 'Role in Homey Energy' setting on the Total device, so the meter can be used either as the home's main meter or as a regular consumer (it was always treated as the main meter before, and so were the phase devices). Added a 'Grid type' setting on the phase devices that hides the readings which are not meaningful in 3-phase networks without a neutral conductor (IT/TT 230 V)."
   }
 }
