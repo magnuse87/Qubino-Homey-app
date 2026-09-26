@@ -223,3 +223,13 @@ missing, the Total W/kWh are ~2/3 of the truth for a balanced 3-phase load (the 
 only with all three currents). Distinguish by reading the per-phase power factor while the compressor runs
 (`GET /api/manager/devices/device/` → `capabilitiesObj.powerFactor`, still updated although hidden): equal PF on
 ph1 and ph2 ⇒ balanced 3-phase load with a missing L3 CT; clearly different PF (cos(φ±30°)) ⇒ single-phase load.
+
+**Root cause found 2026-09-26 08:08 (supersedes the polling theory above):** meter parameter 43 ("Other values –
+reporting on time interval": V and A per phase, total PF, total var; device default 600 s) was set to **0** on the
+owner's meter (driver setting `powerReportingIntervalQ2` on the root device, mislabelled upstream as "output 2").
+With 0 the meter never refreshes those values, and a METER_GET for them returns the last *reported* value, so
+polling every 60 s dutifully returned 6.955 A for an hour while the display showed the truth. Setting parameter 43
+to 60 made every phase endpoint send V/A/var/PF each minute (log: `REPORT src2 V=135.4, A=0.259, scale2=-32.1,
+PF=0.3391`, then src3, src4), and ph1 current dropped to the correct idle value within a minute. Phase polling was
+put back to 300 s as a safety net. Parameter 42 refreshes only the energy counters; W is reported on change
+(parameter 40, valid for total and each phase). Source: openHAB device database entry for ZMNHXD.

@@ -14596,8 +14596,8 @@
             {
               "value": 600,
               "hint": {
-                "en": "This parameter (42) defines the interval in seconds with which the power consumption in Watts is reported to Homey. Note: setting this parameter to zero disables reporting based on intervals completely.",
-                "nl": "Deze parameter (42) bepaalt op welk interval (in seconden) een stroomverbruik update moet worden verstuurd naar Homey. Let op: het instellen van deze parameter op nul schakelt reports per tijdsinterval volledig uit."
+                "en": "This parameter (42) defines the interval in seconds with which the energy counters (kWh import/export, kVARh, kVAh) are reported to Homey. Power in Watts is reported on change instead, see the threshold above. Setting this parameter to zero disables interval reports of the energy counters.",
+                "nl": "Deze parameter (42) bepaalt op welk interval (in seconden) de energietellers (kWh import/export, kVARh, kVAh) naar Homey worden gestuurd. Vermogen in Watt wordt bij verandering gerapporteerd, zie de drempel hierboven. Nul schakelt de interval-rapporten van de energietellers uit."
               },
               "id": "powerReportingInterval",
               "type": "number",
@@ -14625,12 +14625,12 @@
                 "nl": "s"
               },
               "label": {
-                "en": "Voltage/current reporting interval",
-                "nl": "Spanning/stroom report interval"
+                "en": "Voltage/current/power factor reporting interval",
+                "nl": "Spanning/stroom/arbeidsfactor report interval"
               },
               "hint": {
-                "en": "This parameter (43) defines the interval in seconds with which the voltage and current is reported to Homey. Note: setting this parameter to zero disables reporting based on intervals completely.",
-                "nl": "Deze parameter (43) bepaalt op welk interval (in seconden) een spannig en stroom update moet worden verstuurd naar Homey. Let op: het instellen van deze parameter op nul schakelt reports per tijdsinterval volledig uit."
+                "en": "This parameter (43) defines the interval in seconds with which voltage and current per phase, total power factor and total reactive power are reported to Homey. These values are ONLY refreshed by this interval report: the forced refresh (polling) returns the last reported value, so with 0 the phase readings never update. Recommended: 60 - 600.",
+                "nl": "Deze parameter (43) bepaalt op welk interval (in seconden) spanning en stroom per fase, totale arbeidsfactor en totaal reactief vermogen naar Homey worden gestuurd. Deze waarden worden ALLEEN door dit interval-rapport ververst: geforceerd vernieuwen (polling) geeft de laatst gerapporteerde waarde terug, dus met 0 worden de fasewaarden nooit bijgewerkt. Aanbevolen: 60 - 600."
               },
               "value": 600,
               "attr": {

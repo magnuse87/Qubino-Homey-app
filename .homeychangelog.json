@@ -42,6 +42,6 @@
     "en": "3-Phase Smart Meter (ZMNHXD): added a 'Role in Homey Energy' setting on the Total device, so the meter can be used either as the home's main meter or as a regular consumer (it was always treated as the main meter before, and so were the phase devices). Added a 'Grid type' setting on the phase devices that hides the readings which are not meaningful in 3-phase networks without a neutral conductor (IT/TT 230 V)."
   },
   "4.1.10": {
-    "en": "3-Phase Smart Meter (ZMNHXD): readings hidden by the 'Grid type' setting are no longer polled, so the visible readings (e.g. current per phase) can use a short 'Forced refresh interval' without flooding the Z-Wave network. Changing the refresh interval now takes effect for all readings immediately instead of only one."
+    "en": "3-Phase Smart Meter (ZMNHXD): readings hidden by the 'Grid type' setting are no longer polled, so the visible readings (e.g. current per phase) can use a short 'Forced refresh interval' without flooding the Z-Wave network. Changing the refresh interval now takes effect for all readings immediately instead of only one. Clarified the hints of the reporting interval parameters: parameter 43 is what refreshes voltage, current and power factor; with it set to 0 those readings never update."
   }
 }
